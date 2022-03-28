@@ -3,13 +3,13 @@ package main
 import (
 	"fmt"
 	"github.com/getsentry/sentry-go"
-	"github.com/gofiber/fiber/v2"
 	"go.uber.org/zap"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"log"
 	"server/pkg/config"
 	"server/pkg/domain"
+	"server/pkg/server"
 	"server/pkg/user"
 )
 
@@ -44,16 +44,6 @@ func main() {
 	userRepository := user.NewUserRepository(db)
 	userService := user.NewUserService(userRepository)
 
-	app := fiber.New()
-
-	api := app.Group("/api")
-	apiV1 := api.Group("/v1")
-
-	apiV1.Post("/auth/signup", user.HandleSignUp(userService))
-
-	err = app.Listen(cfg.BindAddress)
-	if err != nil {
-		sentry.CaptureException(err)
-		zap.L().Fatal("failed to start server", zap.Error(err))
-	}
+	s := server.New(cfg, userService)
+	s.Start(cfg.BindAddress)
 }
