@@ -29,10 +29,10 @@ func (s *userService) CreateUser(id string, dto *domain.CreateUserDTO) (*domain.
 		return nil, domain.ErrUserAlreadyExists
 	}
 
-	if len(dto.Username) < 3 || len(dto.Username) > 24 {
+	if len(dto.Username) < domain.UsernameMinLength || len(dto.Username) > domain.UsernameMaxLength {
 		return nil, domain.ErrInvalidUsername
 	}
-	if len(dto.Name) > 64 {
+	if len(dto.Name) > domain.UserNameMaxLength {
 		return nil, domain.ErrInvalidName
 	}
 
@@ -53,4 +53,61 @@ func (s *userService) CreateUser(id string, dto *domain.CreateUserDTO) (*domain.
 
 	err = s.userRepository.CreateUser(u)
 	return u, err
+}
+
+func (s *userService) UpdateUser(id string, dto *domain.UpdateUserDTO) (*domain.User, error) {
+	u, err := s.userRepository.GetUserByID(id)
+	if err != nil {
+		return nil, err
+	}
+
+	// Update Username
+	if len(dto.Username) > 0 {
+		if len(dto.Username) < domain.UsernameMinLength || len(dto.Username) > domain.UsernameMaxLength {
+			return nil, domain.ErrInvalidUsername
+		}
+		_, err = s.userRepository.GetUserByUsername(dto.Username)
+		if err != fiber.ErrNotFound {
+			if err != nil {
+				return nil, err
+			}
+			return nil, domain.ErrUsernameTaken
+		}
+		u.Username = dto.Username
+	}
+
+	// Update Name
+	if len(dto.Name) > 0 {
+		if len(dto.Name) > domain.UserNameMaxLength {
+			return nil, domain.ErrInvalidName
+		}
+		u.Name = dto.Name
+	}
+
+	// Update Bio
+	if len(dto.Bio) > 0 {
+		if len(dto.Bio) > domain.UserBioMaxLength {
+			return nil, domain.ErrInvalidBio
+		}
+		u.Bio = dto.Bio
+	}
+
+	// Update Age
+	if dto.Age > 0 {
+		if dto.Age > domain.UserMaxAge || dto.Age == 420 {
+			return nil, domain.ErrInvalidAge
+		}
+		u.Age = dto.Age
+	}
+
+	// Update Age private
+	if dto.AgePrivate != u.AgePrivate {
+		u.AgePrivate = dto.AgePrivate
+	}
+
+	err = s.userRepository.UpdateUser(u)
+	if err != nil {
+		return nil, err
+	}
+	return u, nil
 }

@@ -33,3 +33,20 @@ func (s *Server) HandleCreateUserMe(ctx *fiber.Ctx) error {
 	}
 	return ctx.JSON(u)
 }
+
+func (s *Server) HandleUpdateUserMe(ctx *fiber.Ctx) error {
+	uid, err := s.JWTAuth(ctx)
+	if err != nil {
+		return err
+	}
+	var dto domain.UpdateUserDTO
+	err = ctx.BodyParser(&dto)
+	if err != nil {
+		return fiber.ErrBadRequest
+	}
+	u, err := s.userService.UpdateUser(uid, &dto)
+	if err != nil {
+		return err
+	}
+	return ctx.JSON(u)
+}

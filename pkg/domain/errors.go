@@ -7,4 +7,6 @@ var (
 	ErrInvalidName       = fiber.NewError(fiber.StatusBadRequest, "invalid-name")
 	ErrUserAlreadyExists = fiber.NewError(fiber.StatusBadRequest, "user-already-exists")
 	ErrUsernameTaken     = fiber.NewError(fiber.StatusBadRequest, "username-taken")
+	ErrInvalidBio        = fiber.NewError(fiber.StatusBadRequest, "invalid-bio")
+	ErrInvalidAge        = fiber.NewError(fiber.StatusBadRequest, "invalid-age")
 )

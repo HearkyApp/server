@@ -52,6 +52,7 @@ func New(cfg *config.Config, userService domain.UserService) *Server {
 
 	apiV1.Get("/users/@me", s.HandleGetUserMe)
 	apiV1.Post("/users/@me", s.HandleCreateUserMe)
+	apiV1.Patch("/users/@me", s.HandleUpdateUserMe)
 
 	return s
 }
