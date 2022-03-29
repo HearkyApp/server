@@ -94,7 +94,7 @@ func (s *userService) UpdateUser(id string, dto *domain.UpdateUserDTO) (*domain.
 
 	// Update Age
 	if dto.Age > 0 {
-		if dto.Age > domain.UserMaxAge || dto.Age == 420 {
+		if dto.Age > domain.UserMaxAge && dto.Age != 420 {
 			return nil, domain.ErrInvalidAge
 		}
 		u.Age = dto.Age
