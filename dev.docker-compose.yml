@@ -13,4 +13,3 @@ services:
       - pg-data:/var/lib/postgresql/data
 volumes:
   pg-data: {}
-  appsmith-stacks: {}
