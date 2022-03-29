@@ -5,8 +5,8 @@
 package mock
 
 import (
+	domain "github.com/UpMeetApp/server/pkg/domain"
 	reflect "reflect"
-	domain "server/pkg/domain"
 
 	gomock "github.com/golang/mock/gomock"
 )

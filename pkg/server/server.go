@@ -5,12 +5,12 @@ import (
 	"encoding/base64"
 	firebase "firebase.google.com/go"
 	"firebase.google.com/go/auth"
+	"github.com/UpMeetApp/server/pkg/config"
+	"github.com/UpMeetApp/server/pkg/domain"
 	"github.com/getsentry/sentry-go"
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/zap"
 	"google.golang.org/api/option"
-	"server/pkg/config"
-	"server/pkg/domain"
 )
 
 // Server is the main server struct.

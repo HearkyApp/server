@@ -1,11 +1,11 @@
 package user
 
 import (
+	"github.com/UpMeetApp/server/pkg/domain"
+	"github.com/UpMeetApp/server/pkg/domain/mock"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
-	"server/pkg/domain"
-	"server/pkg/domain/mock"
 	"testing"
 )
 

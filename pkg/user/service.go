@@ -1,8 +1,8 @@
 package user
 
 import (
+	"github.com/UpMeetApp/server/pkg/domain"
 	"github.com/gofiber/fiber/v2"
-	"server/pkg/domain"
 	"time"
 )
 

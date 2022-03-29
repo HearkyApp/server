@@ -1,8 +1,8 @@
 package server
 
 import (
+	"github.com/UpMeetApp/server/pkg/domain"
 	"github.com/gofiber/fiber/v2"
-	"server/pkg/domain"
 )
 
 // HandleGetUserMe handles GET /users/@me

@@ -19,6 +19,7 @@ type Config struct {
 	BindAddress         string `envconfig:"BIND_ADDRESS" default:":3000"`
 }
 
+// LoadConfig loads the configuration from the environment.
 func LoadConfig() *Config {
 	_ = godotenv.Load()
 	var cfg Config

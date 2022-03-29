@@ -1,11 +1,11 @@
 package user
 
 import (
+	"github.com/UpMeetApp/server/pkg/domain"
 	"github.com/getsentry/sentry-go"
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
-	"server/pkg/domain"
 )
 
 type userRepository struct {

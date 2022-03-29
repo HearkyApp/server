@@ -2,15 +2,15 @@ package main
 
 import (
 	"fmt"
+	"github.com/UpMeetApp/server/pkg/config"
+	"github.com/UpMeetApp/server/pkg/domain"
+	"github.com/UpMeetApp/server/pkg/server"
+	"github.com/UpMeetApp/server/pkg/user"
 	"github.com/getsentry/sentry-go"
 	"go.uber.org/zap"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"log"
-	"server/pkg/config"
-	"server/pkg/domain"
-	"server/pkg/server"
-	"server/pkg/user"
 )
 
 func main() {
