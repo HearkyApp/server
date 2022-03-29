@@ -7,7 +7,8 @@ import (
 	"time"
 )
 
-func (s *Server) JWTAuth(ctx *fiber.Ctx) (uid string, err error) {
+// FirebaseAuth is a middleware that validates Firebase ID Tokens passed in the Authorization HTTP header.
+func (s *Server) FirebaseAuth(ctx *fiber.Ctx) (uid string, err error) {
 	h := ctx.Get("Authorization")
 	parts := strings.Split(h, " ")
 	if len(parts) != 2 || strings.ToLower(parts[0]) != "bearer" {

@@ -6,6 +6,7 @@ import (
 	"log"
 )
 
+// Config holds the configuration for the application.
 type Config struct {
 	Debug               bool   `envconfig:"DEBUG" default:"false"`
 	FirebaseCredentials string `envconfig:"FIREBASE_ACCOUNT_KEY" required:"true"`

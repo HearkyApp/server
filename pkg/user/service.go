@@ -10,6 +10,7 @@ type userService struct {
 	userRepository domain.UserRepository
 }
 
+// NewUserService creates a new user service instance.
 func NewUserService(userRepository domain.UserRepository) domain.UserService {
 	return &userService{
 		userRepository: userRepository,

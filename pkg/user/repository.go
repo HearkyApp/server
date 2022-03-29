@@ -12,6 +12,7 @@ type userRepository struct {
 	db *gorm.DB
 }
 
+// NewUserRepository creates a new user repository instance.
 func NewUserRepository(db *gorm.DB) domain.UserRepository {
 	return &userRepository{
 		db: db,

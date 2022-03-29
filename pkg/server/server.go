@@ -13,6 +13,7 @@ import (
 	"server/pkg/domain"
 )
 
+// Server is the main server struct.
 type Server struct {
 	app         *fiber.App
 	fbApp       *firebase.App
@@ -21,6 +22,7 @@ type Server struct {
 	userService domain.UserService
 }
 
+// New created a new (web) server instance.
 func New(cfg *config.Config, userService domain.UserService) *Server {
 	creds, err := base64.StdEncoding.DecodeString(cfg.FirebaseCredentials)
 	if err != nil {
@@ -57,6 +59,7 @@ func New(cfg *config.Config, userService domain.UserService) *Server {
 	return s
 }
 
+// Start starts the (web) server.
 func (s *Server) Start(bindAddress string) {
 	err := s.app.Listen(bindAddress)
 	if err != nil {

@@ -4,6 +4,7 @@ import (
 	"time"
 )
 
+// User is a user of the application.
 type User struct {
 	ID               string    `json:"id" gorm:"primaryKey"`
 	Username         string    `json:"username" gorm:"uniqueIndex"`
@@ -21,18 +22,25 @@ type User struct {
 }
 
 const (
+	// UsernameMinLength is the minimum length of a username.
 	UsernameMinLength = 3
+	// UsernameMaxLength is the maximum length of a username.
 	UsernameMaxLength = 24
+	// UserNameMaxLength is the maximum length of a users' name.
 	UserNameMaxLength = 64
-	UserBioMaxLength  = 256
-	UserMaxAge        = 121
+	// UserBioMaxLength is the maximum length of a users' bio.
+	UserBioMaxLength = 256
+	// UserMaxAge is the maximum age of a user. funfact: (03/29/2022 - current oldest person is Kane Tananka at age 119)
+	UserMaxAge = 120
 )
 
+// CreateUserDTO is the data transfer object for creating a user.
 type CreateUserDTO struct {
 	Username string `json:"username"`
 	Name     string `json:"name"`
 }
 
+// UpdateUserDTO is the data transfer object for updating a user.
 type UpdateUserDTO struct {
 	Username         string `json:"username,omitempty"`
 	Name             string `json:"name,omitempty"`

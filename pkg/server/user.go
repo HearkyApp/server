@@ -5,8 +5,9 @@ import (
 	"server/pkg/domain"
 )
 
+// HandleGetUserMe handles GET /users/@me
 func (s *Server) HandleGetUserMe(ctx *fiber.Ctx) error {
-	uid, err := s.JWTAuth(ctx)
+	uid, err := s.FirebaseAuth(ctx)
 	if err != nil {
 		return err
 	}
@@ -17,8 +18,9 @@ func (s *Server) HandleGetUserMe(ctx *fiber.Ctx) error {
 	return ctx.JSON(u)
 }
 
+// HandleCreateUserMe handles POST /users/@me
 func (s *Server) HandleCreateUserMe(ctx *fiber.Ctx) error {
-	uid, err := s.JWTAuth(ctx)
+	uid, err := s.FirebaseAuth(ctx)
 	if err != nil {
 		return err
 	}
@@ -34,8 +36,9 @@ func (s *Server) HandleCreateUserMe(ctx *fiber.Ctx) error {
 	return ctx.JSON(u)
 }
 
+// HandleUpdateUserMe handles PATCH /users/@me
 func (s *Server) HandleUpdateUserMe(ctx *fiber.Ctx) error {
-	uid, err := s.JWTAuth(ctx)
+	uid, err := s.FirebaseAuth(ctx)
 	if err != nil {
 		return err
 	}

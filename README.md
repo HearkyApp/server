@@ -2,9 +2,11 @@
 
 This repository contains the REST API server for UpMeet.
 
+[![Go Reference](https://pkg.go.dev/badge/github.com/UpMeetApp/server/v4.svg)](https://pkg.go.dev/github.com/golang-jwt/jwt/v4)
+[![build](https://github.com/UpMeetApp/server/actions/workflows/go.yml/badge.svg)](https://github.com/golang-jwt/jwt/actions/workflows/build.yml)
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/24916d5be28b4c378ef207d1a0a48019)](https://www.codacy.com/gh/UpMeetApp/server/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=UpMeetApp/server&amp;utm_campaign=Badge_Grade)
 
-# Development Setup
+## Development Setup
 
 1. Clone the repository
 2. Install dependencies (`go mod download`)
@@ -12,7 +14,7 @@ This repository contains the REST API server for UpMeet.
 4. Setup [environment variables](#environment-variables) (.env file is supported)
 5. Run `go run cmd/server/main.go` to start the server
 
-# Environment Variables
+## Environment Variables
 
 - `UPMEET_DEBUG`: Whether to enable debug mode.
 - `UPMEET_BIND_ADDRESS`: The address to bind the web server to.
