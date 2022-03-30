@@ -425,3 +425,46 @@ func Test_userService_UpdateUser(t *testing.T) {
 		assert.Nil(t, u)
 	})
 }
+
+func Test_userService_DeleteUser(t *testing.T) {
+	t.Run("get user by ID error", func(t *testing.T) {
+		uid := "1"
+
+		ctrl := gomock.NewController(t)
+		repo := mock.NewMockUserRepository(ctrl)
+		repo.EXPECT().GetUserByID(gomock.Eq(uid)).Return(nil, fiber.ErrInternalServerError)
+
+		s := NewUserService(repo)
+		err := s.DeleteUser(uid)
+
+		assert.ErrorIs(t, err, fiber.ErrInternalServerError)
+	})
+
+	t.Run("delete user error", func(t *testing.T) {
+		uid := "1"
+
+		ctrl := gomock.NewController(t)
+		repo := mock.NewMockUserRepository(ctrl)
+		repo.EXPECT().GetUserByID(gomock.Eq(uid)).Return(&domain.User{}, nil)
+		repo.EXPECT().DeleteUser(gomock.Eq(uid)).Return(fiber.ErrInternalServerError)
+
+		s := NewUserService(repo)
+		err := s.DeleteUser(uid)
+
+		assert.ErrorIs(t, err, fiber.ErrInternalServerError)
+	})
+
+	t.Run("delete user", func(t *testing.T) {
+		uid := "1"
+
+		ctrl := gomock.NewController(t)
+		repo := mock.NewMockUserRepository(ctrl)
+		repo.EXPECT().GetUserByID(gomock.Eq(uid)).Return(&domain.User{}, nil)
+		repo.EXPECT().DeleteUser(gomock.Eq(uid)).Return(nil)
+
+		s := NewUserService(repo)
+		err := s.DeleteUser(uid)
+
+		assert.NoError(t, err)
+	})
+}

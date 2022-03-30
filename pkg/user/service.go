@@ -112,3 +112,11 @@ func (s *userService) UpdateUser(id string, dto *domain.UpdateUserDTO) (*domain.
 	}
 	return u, nil
 }
+
+func (s *userService) DeleteUser(id string) error {
+	_, err := s.userRepository.GetUserByID(id)
+	if err != nil {
+		return err
+	}
+	return s.userRepository.DeleteUser(id)
+}

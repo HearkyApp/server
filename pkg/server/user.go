@@ -53,3 +53,16 @@ func (s *Server) HandleUpdateUserMe(ctx *fiber.Ctx) error {
 	}
 	return ctx.JSON(u)
 }
+
+// HandleDeleteUserMe handles DELETE /users/@me
+func (s *Server) HandleDeleteUserMe(ctx *fiber.Ctx) error {
+	uid, err := s.FirebaseAuth(ctx)
+	if err != nil {
+		return err
+	}
+	err = s.userService.DeleteUser(uid)
+	if err != nil {
+		return err
+	}
+	return ctx.SendStatus(200)
+}

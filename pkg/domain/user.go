@@ -57,6 +57,7 @@ type UserService interface {
 	GetUserByID(id string) (*User, error)
 	CreateUser(id string, dto *CreateUserDTO) (*User, error)
 	UpdateUser(id string, dto *UpdateUserDTO) (*User, error)
+	DeleteUser(id string) error
 }
 
 type UserRepository interface {
