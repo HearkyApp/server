@@ -3,7 +3,7 @@
 This repository contains the REST API server for UpMeet.
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/UpMeetApp/server.svg)](https://pkg.go.dev/github.com/UpMeetApp/server)
-[![build](https://github.com/UpMeetApp/server/actions/workflows/go.yml/badge.svg)](https://github.com/UpMeetApp/server/actions/workflows/build.yml)
+[![build](https://github.com/UpMeetApp/server/actions/workflows/go.yml/badge.svg)](https://github.com/UpMeetApp/server/actions/workflows/go.yml)
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/24916d5be28b4c378ef207d1a0a48019)](https://www.codacy.com/gh/UpMeetApp/server/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=UpMeetApp/server&amp;utm_campaign=Badge_Grade)
 
 ## Development Setup
