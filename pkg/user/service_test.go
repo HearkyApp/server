@@ -12,459 +12,285 @@ import (
 func Test_userService_GetUserByID(t *testing.T) {
 	ctrl := gomock.NewController(t)
 
-	u1 := &domain.User{
-		ID: "1",
-	}
+	uid1 := "1"
+	uid2 := "2"
 
 	repo := mock.NewMockUserRepository(ctrl)
-	repo.EXPECT().GetUserByID(gomock.Eq("1")).Return(u1, nil)
-	repo.EXPECT().GetUserByID(gomock.Eq("2")).Return(nil, fiber.ErrNotFound)
+	repo.EXPECT().GetUserByID(gomock.Eq(uid1)).Return(&domain.User{ID: uid1}, nil)
+	repo.EXPECT().GetUserByID(gomock.Eq(uid2)).Return(nil, fiber.ErrNotFound)
 
 	s := NewUserService(repo)
 
-	u, err := s.GetUserByID("1")
+	u, err := s.GetUserByID(uid1)
 	assert.NoError(t, err)
 	assert.NotNil(t, u)
 
-	u, err = s.GetUserByID("2")
+	u, err = s.GetUserByID(uid2)
 	assert.Error(t, err)
 	assert.Nil(t, u)
 }
 
 func Test_userService_CreateUser(t *testing.T) {
-	t.Run("get user by ID error", func(t *testing.T) {
-		uid := "1"
-		dto := &domain.CreateUserDTO{}
+	ctrl := gomock.NewController(t)
+	repo := mock.NewMockUserRepository(ctrl)
+	s := NewUserService(repo)
 
-		ctrl := gomock.NewController(t)
-		repo := mock.NewMockUserRepository(ctrl)
-		repo.EXPECT().GetUserByID(gomock.Eq(uid)).Return(nil, fiber.ErrInternalServerError)
+	uid := "1"
 
-		s := NewUserService(repo)
-		u, err := s.CreateUser(uid, dto)
+	// GetUserByID returns error
+	repo.EXPECT().GetUserByID(gomock.Eq(uid)).Return(nil, fiber.ErrInternalServerError)
+	dto := &domain.CreateUserDTO{}
+	u, err := s.CreateUser(uid, dto)
+	assert.ErrorIs(t, err, fiber.ErrInternalServerError)
+	assert.Nil(t, u)
 
-		assert.ErrorIs(t, err, fiber.ErrInternalServerError)
-		assert.Nil(t, u)
-	})
+	// User already registered
+	repo.EXPECT().GetUserByID(gomock.Eq(uid)).Return(&domain.User{}, nil)
+	u, err = s.CreateUser(uid, dto)
+	assert.ErrorIs(t, err, domain.ErrUserAlreadyExists)
+	assert.Nil(t, u)
 
-	t.Run("user already registered", func(t *testing.T) {
-		uid := "1"
-		dto := &domain.CreateUserDTO{}
+	// Username too short
+	dto = &domain.CreateUserDTO{
+		Username: "te",
+	}
+	repo.EXPECT().GetUserByID(gomock.Eq(uid)).Return(nil, fiber.ErrNotFound)
+	u, err = s.CreateUser(uid, dto)
+	assert.ErrorIs(t, err, domain.ErrInvalidUsername)
+	assert.Nil(t, u)
 
-		ctrl := gomock.NewController(t)
-		repo := mock.NewMockUserRepository(ctrl)
-		repo.EXPECT().GetUserByID(gomock.Eq(uid)).Return(&domain.User{}, nil)
+	// Username too long
+	dto = &domain.CreateUserDTO{
+		Username: "testtesttesttesttesttestt",
+	}
+	repo.EXPECT().GetUserByID(gomock.Eq(uid)).Return(nil, fiber.ErrNotFound)
+	u, err = s.CreateUser(uid, dto)
+	assert.ErrorIs(t, err, domain.ErrInvalidUsername)
+	assert.Nil(t, u)
 
-		s := NewUserService(repo)
-		u, err := s.CreateUser(uid, dto)
+	// Name too long
+	dto = &domain.CreateUserDTO{
+		Name:     "testtesttesttesttesttesttesttesttesttesttesttesttesttesttesttestt",
+		Username: "test",
+	}
+	repo.EXPECT().GetUserByID(gomock.Eq(uid)).Return(nil, fiber.ErrNotFound)
+	u, err = s.CreateUser(uid, dto)
+	assert.ErrorIs(t, err, domain.ErrInvalidName)
+	assert.Nil(t, u)
 
-		assert.ErrorIs(t, err, domain.ErrUserAlreadyExists)
-		assert.Nil(t, u)
-	})
+	// GetByUsername returns error
+	dto = &domain.CreateUserDTO{
+		Name:     "test",
+		Username: "test",
+	}
+	repo.EXPECT().GetUserByID(gomock.Eq(uid)).Return(nil, fiber.ErrNotFound)
+	repo.EXPECT().GetUserByUsername(gomock.Eq(dto.Username)).Return(nil, fiber.ErrInternalServerError)
+	u, err = s.CreateUser(uid, dto)
+	assert.ErrorIs(t, err, fiber.ErrInternalServerError)
+	assert.Nil(t, u)
 
-	t.Run("username too short", func(t *testing.T) {
-		uid := "1"
-		dto := &domain.CreateUserDTO{
-			Username: "te",
-		}
+	// Username already taken
+	dto = &domain.CreateUserDTO{
+		Name:     "test",
+		Username: "test",
+	}
+	repo.EXPECT().GetUserByID(gomock.Eq(uid)).Return(nil, fiber.ErrNotFound)
+	repo.EXPECT().GetUserByUsername(gomock.Eq(dto.Username)).Return(&domain.User{}, nil)
+	u, err = s.CreateUser(uid, dto)
+	assert.ErrorIs(t, err, domain.ErrUsernameTaken)
+	assert.Nil(t, u)
 
-		ctrl := gomock.NewController(t)
-		repo := mock.NewMockUserRepository(ctrl)
-		repo.EXPECT().GetUserByID(gomock.Eq(uid)).Return(nil, fiber.ErrNotFound)
+	// CreateUser success
+	dto = &domain.CreateUserDTO{
+		Name:     "test",
+		Username: "test",
+	}
+	repo.EXPECT().GetUserByID(gomock.Eq(uid)).Return(nil, fiber.ErrNotFound)
+	repo.EXPECT().GetUserByUsername(gomock.Eq(dto.Username)).Return(nil, fiber.ErrNotFound)
+	repo.EXPECT().CreateUser(gomock.Any()).Return(nil)
 
-		s := NewUserService(repo)
-		u, err := s.CreateUser(uid, dto)
-
-		assert.ErrorIs(t, err, domain.ErrInvalidUsername)
-		assert.Nil(t, u)
-	})
-
-	t.Run("username too long", func(t *testing.T) {
-		uid := "1"
-		dto := &domain.CreateUserDTO{
-			Username: "testtesttesttesttesttestt",
-		}
-
-		ctrl := gomock.NewController(t)
-		repo := mock.NewMockUserRepository(ctrl)
-		repo.EXPECT().GetUserByID(gomock.Eq(uid)).Return(nil, fiber.ErrNotFound)
-
-		s := NewUserService(repo)
-		u, err := s.CreateUser(uid, dto)
-
-		assert.ErrorIs(t, err, domain.ErrInvalidUsername)
-		assert.Nil(t, u)
-	})
-
-	t.Run("name too long", func(t *testing.T) {
-		uid := "1"
-		dto := &domain.CreateUserDTO{
-			Name:     "testtesttesttesttesttesttesttesttesttesttesttesttesttesttesttestt",
-			Username: "test",
-		}
-
-		ctrl := gomock.NewController(t)
-		repo := mock.NewMockUserRepository(ctrl)
-		repo.EXPECT().GetUserByID(gomock.Eq(uid)).Return(nil, fiber.ErrNotFound)
-
-		s := NewUserService(repo)
-		u, err := s.CreateUser(uid, dto)
-
-		assert.ErrorIs(t, err, domain.ErrInvalidName)
-		assert.Nil(t, u)
-	})
-
-	t.Run("get by username error", func(t *testing.T) {
-		uid := "1"
-		dto := &domain.CreateUserDTO{
-			Name:     "test",
-			Username: "test",
-		}
-
-		ctrl := gomock.NewController(t)
-		repo := mock.NewMockUserRepository(ctrl)
-		repo.EXPECT().GetUserByID(gomock.Eq(uid)).Return(nil, fiber.ErrNotFound)
-		repo.EXPECT().GetUserByUsername(gomock.Eq(dto.Username)).Return(nil, fiber.ErrInternalServerError)
-
-		s := NewUserService(repo)
-		u, err := s.CreateUser(uid, dto)
-
-		assert.ErrorIs(t, err, fiber.ErrInternalServerError)
-		assert.Nil(t, u)
-	})
-
-	t.Run("username already taken", func(t *testing.T) {
-		uid := "1"
-		dto := &domain.CreateUserDTO{
-			Name:     "test",
-			Username: "test",
-		}
-
-		ctrl := gomock.NewController(t)
-		repo := mock.NewMockUserRepository(ctrl)
-		repo.EXPECT().GetUserByID(gomock.Eq(uid)).Return(nil, fiber.ErrNotFound)
-		repo.EXPECT().GetUserByUsername(gomock.Eq(dto.Username)).Return(&domain.User{}, nil)
-
-		s := NewUserService(repo)
-		u, err := s.CreateUser(uid, dto)
-
-		assert.ErrorIs(t, err, domain.ErrUsernameTaken)
-		assert.Nil(t, u)
-	})
-
-	t.Run("create user successful", func(t *testing.T) {
-		uid := "1"
-		dto := &domain.CreateUserDTO{
-			Name:     "test",
-			Username: "test",
-		}
-
-		ctrl := gomock.NewController(t)
-		repo := mock.NewMockUserRepository(ctrl)
-		repo.EXPECT().GetUserByID(gomock.Eq(uid)).Return(nil, fiber.ErrNotFound)
-		repo.EXPECT().GetUserByUsername(gomock.Eq(dto.Username)).Return(nil, fiber.ErrNotFound)
-		repo.EXPECT().CreateUser(gomock.Any()).Return(nil)
-
-		s := NewUserService(repo)
-		u, err := s.CreateUser(uid, dto)
-		assert.NoError(t, err)
-		assert.NotNil(t, u)
-		assert.NotEmpty(t, u.ID)
-		assert.Equal(t, u.Name, dto.Name)
-		assert.Equal(t, u.Username, dto.Username)
-		assert.NotNil(t, u.CreatedAt)
-	})
+	u, err = s.CreateUser(uid, dto)
+	assert.NoError(t, err)
+	assert.NotNil(t, u)
+	assert.NotEmpty(t, u.ID)
+	assert.Equal(t, u.Name, dto.Name)
+	assert.Equal(t, u.Username, dto.Username)
+	assert.NotNil(t, u.CreatedAt)
 }
 
 func Test_userService_UpdateUser(t *testing.T) {
-	t.Run("get user by ID error", func(t *testing.T) {
-		uid := "1"
-		dto := &domain.UpdateUserDTO{}
+	ctrl := gomock.NewController(t)
+	repo := mock.NewMockUserRepository(ctrl)
+	s := NewUserService(repo)
 
-		ctrl := gomock.NewController(t)
-		repo := mock.NewMockUserRepository(ctrl)
-		repo.EXPECT().GetUserByID(gomock.Eq(uid)).Return(nil, fiber.ErrInternalServerError)
+	uid := "1"
 
-		s := NewUserService(repo)
-		u, err := s.UpdateUser(uid, dto)
+	// GetUserByID returns error
+	dto := &domain.UpdateUserDTO{}
+	repo.EXPECT().GetUserByID(gomock.Eq(uid)).Return(nil, fiber.ErrInternalServerError)
+	u, err := s.UpdateUser(uid, dto)
+	assert.ErrorIs(t, err, fiber.ErrInternalServerError)
+	assert.Nil(t, u)
 
-		assert.ErrorIs(t, err, fiber.ErrInternalServerError)
-		assert.Nil(t, u)
-	})
+	// Username too short
+	dto = &domain.UpdateUserDTO{
+		Username: "a",
+	}
+	repo.EXPECT().GetUserByID(gomock.Eq(uid)).Return(&domain.User{}, nil)
+	u, err = s.UpdateUser(uid, dto)
+	assert.ErrorIs(t, err, domain.ErrInvalidUsername)
+	assert.Nil(t, u)
 
-	t.Run("username too short", func(t *testing.T) {
-		uid := "1"
-		dto := &domain.UpdateUserDTO{
-			Username: "a",
-		}
+	// Username too long
+	dto = &domain.UpdateUserDTO{
+		Username: "testtesttesttesttesttestt",
+	}
+	repo.EXPECT().GetUserByID(gomock.Eq(uid)).Return(&domain.User{}, nil)
+	u, err = s.UpdateUser(uid, dto)
+	assert.ErrorIs(t, err, domain.ErrInvalidUsername)
+	assert.Nil(t, u)
 
-		ctrl := gomock.NewController(t)
-		repo := mock.NewMockUserRepository(ctrl)
-		repo.EXPECT().GetUserByID(gomock.Eq(uid)).Return(&domain.User{}, nil)
+	// GetByUsername returns error
+	dto = &domain.UpdateUserDTO{
+		Username: "test",
+	}
+	repo.EXPECT().GetUserByID(gomock.Eq(uid)).Return(&domain.User{}, nil)
+	repo.EXPECT().GetUserByUsername(gomock.Eq(dto.Username)).Return(nil, fiber.ErrInternalServerError)
+	u, err = s.UpdateUser(uid, dto)
+	assert.ErrorIs(t, err, fiber.ErrInternalServerError)
+	assert.Nil(t, u)
 
-		s := NewUserService(repo)
-		u, err := s.UpdateUser(uid, dto)
+	// Username is already taken
+	dto = &domain.UpdateUserDTO{
+		Username: "test",
+	}
+	repo.EXPECT().GetUserByID(gomock.Eq(uid)).Return(&domain.User{}, nil)
+	repo.EXPECT().GetUserByUsername(gomock.Eq(dto.Username)).Return(&domain.User{}, nil)
+	u, err = s.UpdateUser(uid, dto)
+	assert.ErrorIs(t, err, domain.ErrUsernameTaken)
+	assert.Nil(t, u)
 
-		assert.ErrorIs(t, err, domain.ErrInvalidUsername)
-		assert.Nil(t, u)
-	})
+	// Username updated
+	dto = &domain.UpdateUserDTO{
+		Username: "test",
+	}
+	repo.EXPECT().GetUserByID(gomock.Eq(uid)).Return(&domain.User{}, nil)
+	repo.EXPECT().GetUserByUsername(gomock.Eq(dto.Username)).Return(nil, fiber.ErrNotFound)
+	repo.EXPECT().UpdateUser(gomock.Any()).Return(nil)
+	u, err = s.UpdateUser(uid, dto)
+	assert.NoError(t, err)
+	assert.NotNil(t, u)
+	assert.Equal(t, u.Username, dto.Username)
 
-	t.Run("username too long", func(t *testing.T) {
-		uid := "1"
-		dto := &domain.UpdateUserDTO{
-			Username: "testtesttesttesttesttestt",
-		}
+	// Name too long
+	dto = &domain.UpdateUserDTO{
+		Name: "testtesttesttesttesttesttesttesttesttesttesttesttesttesttesttestt",
+	}
+	repo.EXPECT().GetUserByID(gomock.Eq(uid)).Return(&domain.User{}, nil)
+	u, err = s.UpdateUser(uid, dto)
+	assert.ErrorIs(t, err, domain.ErrInvalidName)
+	assert.Nil(t, u)
 
-		ctrl := gomock.NewController(t)
-		repo := mock.NewMockUserRepository(ctrl)
-		repo.EXPECT().GetUserByID(gomock.Eq(uid)).Return(&domain.User{}, nil)
+	// Name updated
+	dto = &domain.UpdateUserDTO{
+		Name: "test",
+	}
+	repo.EXPECT().GetUserByID(gomock.Eq(uid)).Return(&domain.User{}, nil)
+	repo.EXPECT().UpdateUser(gomock.Any()).Return(nil)
+	u, err = s.UpdateUser(uid, dto)
+	assert.NoError(t, err)
+	assert.NotNil(t, u)
+	assert.Equal(t, u.Name, dto.Name)
 
-		s := NewUserService(repo)
-		u, err := s.UpdateUser(uid, dto)
+	// Bio too long
+	dto = &domain.UpdateUserDTO{
+		Bio: "testtesttesttesttesttesttesttesttesttesttesttesttesttesttesttestttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttestttesttesttestttesttesttesttesttesttestftesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttestt",
+	}
+	repo.EXPECT().GetUserByID(gomock.Eq(uid)).Return(&domain.User{}, nil)
+	u, err = s.UpdateUser(uid, dto)
+	assert.ErrorIs(t, err, domain.ErrInvalidBio)
+	assert.Nil(t, u)
 
-		assert.ErrorIs(t, err, domain.ErrInvalidUsername)
-		assert.Nil(t, u)
-	})
+	// Bio updated
+	dto = &domain.UpdateUserDTO{
+		Bio: "test",
+	}
+	repo.EXPECT().GetUserByID(gomock.Eq(uid)).Return(&domain.User{}, nil)
+	repo.EXPECT().UpdateUser(gomock.Any()).Return(nil)
+	u, err = s.UpdateUser(uid, dto)
+	assert.NoError(t, err)
+	assert.NotNil(t, u)
+	assert.Equal(t, u.Bio, dto.Bio)
 
-	t.Run("get by username error", func(t *testing.T) {
-		uid := "1"
-		dto := &domain.UpdateUserDTO{
-			Username: "test",
-		}
+	// Age invalid
+	dto = &domain.UpdateUserDTO{
+		Age: 420,
+	}
+	repo.EXPECT().GetUserByID(gomock.Eq(uid)).Return(&domain.User{}, nil)
+	u, err = s.UpdateUser(uid, dto)
+	assert.ErrorIs(t, err, domain.ErrInvalidAge)
+	assert.Nil(t, u)
 
-		ctrl := gomock.NewController(t)
-		repo := mock.NewMockUserRepository(ctrl)
-		repo.EXPECT().GetUserByID(gomock.Eq(uid)).Return(&domain.User{}, nil)
-		repo.EXPECT().GetUserByUsername(gomock.Eq(dto.Username)).Return(nil, fiber.ErrInternalServerError)
+	// Age updated
+	dto = &domain.UpdateUserDTO{
+		Age: 19,
+	}
+	repo.EXPECT().GetUserByID(gomock.Eq(uid)).Return(&domain.User{}, nil)
+	repo.EXPECT().UpdateUser(gomock.Any()).Return(nil)
+	u, err = s.UpdateUser(uid, dto)
+	assert.NoError(t, err)
+	assert.NotNil(t, u)
+	assert.Equal(t, u.Age, dto.Age)
 
-		s := NewUserService(repo)
-		u, err := s.UpdateUser(uid, dto)
+	// AgePrivate updated
+	dto = &domain.UpdateUserDTO{
+		AgePrivate: true,
+	}
+	repo.EXPECT().GetUserByID(gomock.Eq(uid)).Return(&domain.User{}, nil)
+	repo.EXPECT().UpdateUser(gomock.Any()).Return(nil)
+	u, err = s.UpdateUser(uid, dto)
+	assert.NoError(t, err)
+	assert.NotNil(t, u)
+	assert.Equal(t, u.AgePrivate, dto.AgePrivate)
 
-		assert.ErrorIs(t, err, fiber.ErrInternalServerError)
-		assert.Nil(t, u)
-	})
+	// UpdateUser returns error
+	dto = &domain.UpdateUserDTO{}
+	repo.EXPECT().GetUserByID(gomock.Eq(uid)).Return(&domain.User{}, nil)
+	repo.EXPECT().UpdateUser(gomock.Any()).Return(fiber.ErrInternalServerError)
+	u, err = s.UpdateUser(uid, dto)
+	assert.ErrorIs(t, err, fiber.ErrInternalServerError)
+	assert.Nil(t, u)
 
-	t.Run("username already taken", func(t *testing.T) {
-		uid := "1"
-		dto := &domain.UpdateUserDTO{
-			Username: "test",
-		}
-
-		ctrl := gomock.NewController(t)
-		repo := mock.NewMockUserRepository(ctrl)
-		repo.EXPECT().GetUserByID(gomock.Eq(uid)).Return(&domain.User{}, nil)
-		repo.EXPECT().GetUserByUsername(gomock.Eq(dto.Username)).Return(&domain.User{}, nil)
-
-		s := NewUserService(repo)
-		u, err := s.UpdateUser(uid, dto)
-
-		assert.ErrorIs(t, err, domain.ErrUsernameTaken)
-		assert.Nil(t, u)
-	})
-
-	t.Run("username updated", func(t *testing.T) {
-		uid := "1"
-		dto := &domain.UpdateUserDTO{
-			Username: "test",
-		}
-
-		ctrl := gomock.NewController(t)
-		repo := mock.NewMockUserRepository(ctrl)
-		repo.EXPECT().GetUserByID(gomock.Eq(uid)).Return(&domain.User{}, nil)
-		repo.EXPECT().GetUserByUsername(gomock.Eq(dto.Username)).Return(nil, fiber.ErrNotFound)
-		repo.EXPECT().UpdateUser(gomock.Any()).Return(nil)
-
-		s := NewUserService(repo)
-		u, err := s.UpdateUser(uid, dto)
-
-		assert.NoError(t, err)
-		assert.NotNil(t, u)
-		assert.Equal(t, u.Username, dto.Username)
-	})
-
-	t.Run("name too long", func(t *testing.T) {
-		uid := "1"
-		dto := &domain.UpdateUserDTO{
-			Name: "testtesttesttesttesttesttesttesttesttesttesttesttesttesttesttestt",
-		}
-
-		ctrl := gomock.NewController(t)
-		repo := mock.NewMockUserRepository(ctrl)
-		repo.EXPECT().GetUserByID(gomock.Eq(uid)).Return(&domain.User{}, nil)
-
-		s := NewUserService(repo)
-		u, err := s.UpdateUser(uid, dto)
-
-		assert.ErrorIs(t, err, domain.ErrInvalidName)
-		assert.Nil(t, u)
-	})
-
-	t.Run("name updated", func(t *testing.T) {
-		uid := "1"
-		dto := &domain.UpdateUserDTO{
-			Name: "test",
-		}
-
-		ctrl := gomock.NewController(t)
-		repo := mock.NewMockUserRepository(ctrl)
-		repo.EXPECT().GetUserByID(gomock.Eq(uid)).Return(&domain.User{}, nil)
-		repo.EXPECT().UpdateUser(gomock.Any()).Return(nil)
-
-		s := NewUserService(repo)
-		u, err := s.UpdateUser(uid, dto)
-
-		assert.NoError(t, err)
-		assert.NotNil(t, u)
-		assert.Equal(t, u.Name, dto.Name)
-	})
-
-	t.Run("bio too long", func(t *testing.T) {
-		uid := "1"
-		dto := &domain.UpdateUserDTO{
-			Bio: "testtesttesttesttesttesttesttesttesttesttesttesttesttesttesttestttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttestttesttesttestttesttesttesttesttesttestftesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttesttestt",
-		}
-
-		ctrl := gomock.NewController(t)
-		repo := mock.NewMockUserRepository(ctrl)
-		repo.EXPECT().GetUserByID(gomock.Eq(uid)).Return(&domain.User{}, nil)
-
-		s := NewUserService(repo)
-		u, err := s.UpdateUser(uid, dto)
-
-		assert.ErrorIs(t, err, domain.ErrInvalidBio)
-		assert.Nil(t, u)
-	})
-
-	t.Run("bio updated", func(t *testing.T) {
-		uid := "1"
-		dto := &domain.UpdateUserDTO{
-			Bio: "test",
-		}
-
-		ctrl := gomock.NewController(t)
-		repo := mock.NewMockUserRepository(ctrl)
-		repo.EXPECT().GetUserByID(gomock.Eq(uid)).Return(&domain.User{}, nil)
-		repo.EXPECT().UpdateUser(gomock.Any()).Return(nil)
-
-		s := NewUserService(repo)
-		u, err := s.UpdateUser(uid, dto)
-
-		assert.NoError(t, err)
-		assert.NotNil(t, u)
-		assert.Equal(t, u.Bio, dto.Bio)
-	})
-
-	t.Run("age invalid", func(t *testing.T) {
-		uid := "1"
-		dto := &domain.UpdateUserDTO{
-			Age: 421,
-		}
-
-		ctrl := gomock.NewController(t)
-		repo := mock.NewMockUserRepository(ctrl)
-		repo.EXPECT().GetUserByID(gomock.Eq(uid)).Return(&domain.User{}, nil)
-
-		s := NewUserService(repo)
-		u, err := s.UpdateUser(uid, dto)
-
-		assert.ErrorIs(t, err, domain.ErrInvalidAge)
-		assert.Nil(t, u)
-	})
-
-	t.Run("age updated", func(t *testing.T) {
-		uid := "1"
-		dto := &domain.UpdateUserDTO{
-			Age: 19,
-		}
-
-		ctrl := gomock.NewController(t)
-		repo := mock.NewMockUserRepository(ctrl)
-		repo.EXPECT().GetUserByID(gomock.Eq(uid)).Return(&domain.User{}, nil)
-		repo.EXPECT().UpdateUser(gomock.Any()).Return(nil)
-
-		s := NewUserService(repo)
-		u, err := s.UpdateUser(uid, dto)
-
-		assert.NoError(t, err)
-		assert.NotNil(t, u)
-		assert.Equal(t, u.Age, dto.Age)
-	})
-
-	t.Run("age_private updated", func(t *testing.T) {
-		uid := "1"
-		dto := &domain.UpdateUserDTO{
-			AgePrivate: true,
-		}
-
-		ctrl := gomock.NewController(t)
-		repo := mock.NewMockUserRepository(ctrl)
-		repo.EXPECT().GetUserByID(gomock.Eq(uid)).Return(&domain.User{}, nil)
-		repo.EXPECT().UpdateUser(gomock.Any()).Return(nil)
-
-		s := NewUserService(repo)
-		u, err := s.UpdateUser(uid, dto)
-
-		assert.NoError(t, err)
-		assert.NotNil(t, u)
-		assert.Equal(t, u.AgePrivate, dto.AgePrivate)
-	})
-
-	t.Run("update user error", func(t *testing.T) {
-		uid := "1"
-		dto := &domain.UpdateUserDTO{}
-
-		ctrl := gomock.NewController(t)
-		repo := mock.NewMockUserRepository(ctrl)
-		repo.EXPECT().GetUserByID(gomock.Eq(uid)).Return(&domain.User{}, nil)
-		repo.EXPECT().UpdateUser(gomock.Any()).Return(fiber.ErrInternalServerError)
-
-		s := NewUserService(repo)
-		u, err := s.UpdateUser(uid, dto)
-
-		assert.ErrorIs(t, err, fiber.ErrInternalServerError)
-		assert.Nil(t, u)
-	})
+	// UpdateUser successful
+	dto = &domain.UpdateUserDTO{}
+	repo.EXPECT().GetUserByID(gomock.Eq(uid)).Return(&domain.User{}, nil)
+	repo.EXPECT().UpdateUser(gomock.Any()).Return(nil)
+	u, err = s.UpdateUser(uid, dto)
+	assert.NoError(t, err)
+	assert.NotNil(t, u)
 }
 
 func Test_userService_DeleteUser(t *testing.T) {
-	t.Run("get user by ID error", func(t *testing.T) {
-		uid := "1"
+	ctrl := gomock.NewController(t)
+	repo := mock.NewMockUserRepository(ctrl)
+	s := NewUserService(repo)
 
-		ctrl := gomock.NewController(t)
-		repo := mock.NewMockUserRepository(ctrl)
-		repo.EXPECT().GetUserByID(gomock.Eq(uid)).Return(nil, fiber.ErrInternalServerError)
+	uid := "1"
 
-		s := NewUserService(repo)
-		err := s.DeleteUser(uid)
+	// GetUserByID returns error
+	repo.EXPECT().GetUserByID(gomock.Eq(uid)).Return(nil, fiber.ErrInternalServerError)
+	err := s.DeleteUser(uid)
+	assert.ErrorIs(t, err, fiber.ErrInternalServerError)
 
-		assert.ErrorIs(t, err, fiber.ErrInternalServerError)
-	})
+	// DeleteUser returns error
+	repo.EXPECT().GetUserByID(gomock.Eq(uid)).Return(&domain.User{}, nil)
+	repo.EXPECT().DeleteUser(gomock.Eq(uid)).Return(fiber.ErrInternalServerError)
+	err = s.DeleteUser(uid)
+	assert.ErrorIs(t, err, fiber.ErrInternalServerError)
 
-	t.Run("delete user error", func(t *testing.T) {
-		uid := "1"
-
-		ctrl := gomock.NewController(t)
-		repo := mock.NewMockUserRepository(ctrl)
-		repo.EXPECT().GetUserByID(gomock.Eq(uid)).Return(&domain.User{}, nil)
-		repo.EXPECT().DeleteUser(gomock.Eq(uid)).Return(fiber.ErrInternalServerError)
-
-		s := NewUserService(repo)
-		err := s.DeleteUser(uid)
-
-		assert.ErrorIs(t, err, fiber.ErrInternalServerError)
-	})
-
-	t.Run("delete user", func(t *testing.T) {
-		uid := "1"
-
-		ctrl := gomock.NewController(t)
-		repo := mock.NewMockUserRepository(ctrl)
-		repo.EXPECT().GetUserByID(gomock.Eq(uid)).Return(&domain.User{}, nil)
-		repo.EXPECT().DeleteUser(gomock.Eq(uid)).Return(nil)
-
-		s := NewUserService(repo)
-		err := s.DeleteUser(uid)
-
-		assert.NoError(t, err)
-	})
+	// DeleteUser successful
+	repo.EXPECT().GetUserByID(gomock.Eq(uid)).Return(&domain.User{}, nil)
+	repo.EXPECT().DeleteUser(gomock.Eq(uid)).Return(nil)
+	err = s.DeleteUser(uid)
+	assert.NoError(t, err)
 }
