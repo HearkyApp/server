@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-// User is a user of the application.
+// User is a user of the UpMeet application.
 type User struct {
 	ID               string    `json:"id" gorm:"primaryKey"`
 	Username         string    `json:"username" gorm:"uniqueIndex"`
@@ -42,22 +42,23 @@ type CreateUserDTO struct {
 
 // UpdateUserDTO is the data transfer object for updating a user.
 type UpdateUserDTO struct {
-	Username         string `json:"username,omitempty"`
-	Name             string `json:"name,omitempty"`
-	Bio              string `json:"bio,omitempty"`
-	Age              int    `json:"age,omitempty"`
-	AgePrivate       bool   `json:"age_private,omitempty"`
-	InstagramProfile string `json:"instagram_profile,omitempty"`
-	FacebookProfile  string `json:"facebook_profile,omitempty"`
-	TwitterProfile   string `json:"twitter_profile,omitempty"`
-	DiscordTag       string `json:"discord_tag,omitempty"`
+	Username         string    `json:"username,omitempty"`
+	Name             string    `json:"name,omitempty"`
+	Bio              string    `json:"bio,omitempty"`
+	Age              int       `json:"age,omitempty"`
+	AgePrivate       bool      `json:"age_private,omitempty"`
+	InstagramProfile string    `json:"instagram_profile,omitempty"`
+	FacebookProfile  string    `json:"facebook_profile,omitempty"`
+	TwitterProfile   string    `json:"twitter_profile,omitempty"`
+	DiscordTag       string    `json:"discord_tag,omitempty"`
+	Meetups          []*Meetup `gorm:"many2many:participants;"`
 }
 
 type UserService interface {
-	GetUserByID(id string) (*User, error)
-	CreateUser(id string, dto *CreateUserDTO) (*User, error)
-	UpdateUser(id string, dto *UpdateUserDTO) (*User, error)
-	DeleteUser(id string) error
+	GetUserByID(uid string) (*User, error)
+	CreateUser(uid string, dto *CreateUserDTO) (*User, error)
+	UpdateUser(uid string, dto *UpdateUserDTO) (*User, error)
+	DeleteUser(uid string) error
 }
 
 type UserRepository interface {

@@ -17,12 +17,12 @@ func NewUserService(userRepository domain.UserRepository) domain.UserService {
 	}
 }
 
-func (s *userService) GetUserByID(id string) (*domain.User, error) {
-	return s.userRepository.GetUserByID(id)
+func (s *userService) GetUserByID(uid string) (*domain.User, error) {
+	return s.userRepository.GetUserByID(uid)
 }
 
-func (s *userService) CreateUser(id string, dto *domain.CreateUserDTO) (*domain.User, error) {
-	_, err := s.userRepository.GetUserByID(id)
+func (s *userService) CreateUser(uid string, dto *domain.CreateUserDTO) (*domain.User, error) {
+	_, err := s.userRepository.GetUserByID(uid)
 	if err != fiber.ErrNotFound {
 		if err != nil {
 			return nil, err
@@ -46,7 +46,7 @@ func (s *userService) CreateUser(id string, dto *domain.CreateUserDTO) (*domain.
 	}
 
 	u := &domain.User{
-		ID:        id,
+		ID:        uid,
 		Name:      dto.Name,
 		Username:  dto.Username,
 		CreatedAt: time.Now(),
@@ -56,8 +56,8 @@ func (s *userService) CreateUser(id string, dto *domain.CreateUserDTO) (*domain.
 	return u, err
 }
 
-func (s *userService) UpdateUser(id string, dto *domain.UpdateUserDTO) (*domain.User, error) {
-	u, err := s.userRepository.GetUserByID(id)
+func (s *userService) UpdateUser(uid string, dto *domain.UpdateUserDTO) (*domain.User, error) {
+	u, err := s.userRepository.GetUserByID(uid)
 	if err != nil {
 		return nil, err
 	}
@@ -113,10 +113,10 @@ func (s *userService) UpdateUser(id string, dto *domain.UpdateUserDTO) (*domain.
 	return u, nil
 }
 
-func (s *userService) DeleteUser(id string) error {
-	_, err := s.userRepository.GetUserByID(id)
+func (s *userService) DeleteUser(uid string) error {
+	_, err := s.userRepository.GetUserByID(uid)
 	if err != nil {
 		return err
 	}
-	return s.userRepository.DeleteUser(id)
+	return s.userRepository.DeleteUser(uid)
 }

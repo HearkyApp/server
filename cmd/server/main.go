@@ -35,7 +35,7 @@ func main() {
 		zap.L().Fatal("failed to connect to database", zap.Error(err))
 	}
 
-	err = db.AutoMigrate(domain.User{})
+	err = db.AutoMigrate(domain.User{}, domain.Meetup{}, domain.ParticipantPermissions{})
 	if err != nil {
 		sentry.CaptureException(err)
 		zap.L().Fatal("failed to migrate database", zap.Error(err))
